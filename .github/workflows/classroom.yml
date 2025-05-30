@@ -1,0 +1,50 @@
+name: Autograding Tests
+'on':
+- push
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Freebie
+      id: freebie
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Freebie
+        setup-command: ''
+        command: gradle test1
+        timeout: 10
+        max-score: 10
+    - name: Rock Battle
+      id: rock-battle
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Rock Battle
+        setup-command: ''
+        command: gradle test2
+        timeout: 10
+        max-score: 7
+    - name: Random Battle
+      id: random-battle
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Random Battle
+        setup-command: ''
+        command: gradle test3
+        timeout: 10
+        max-score: 3
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        FREEBIE_RESULTS: "${{steps.freebie.outputs.result}}"
+        ROCK-BATTLE_RESULTS: "${{steps.rock-battle.outputs.result}}"
+        RANDOM-BATTLE_RESULTS: "${{steps.random-battle.outputs.result}}"
+      with:
+        runners: freebie,rock-battle,random-battle
