@@ -258,6 +258,10 @@ public class MyRobot extends Robot{
                 y -= 1;
             }
             currDist = distances[x][y];
+            if(currDist == Integer.MAX_VALUE) {
+                System.out.println("No path found to target.");
+                return;
+            }
         }
         if(lastX == -1 || lastY == -1) {
             xMovement = x - robotTileXPlus;
