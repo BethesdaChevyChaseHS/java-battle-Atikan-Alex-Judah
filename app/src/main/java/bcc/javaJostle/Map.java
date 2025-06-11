@@ -46,7 +46,7 @@ public class Map {
         return tiles;
     }
 
-    public void display(Graphics g, int panelWidth, int panelHeight, int cameraX, int cameraY, double zoomFactor) {
+    public void display(Graphics g, int panelWidth, int panelHeight, int cameraX, int cameraY, double zoomFactor, boolean[][] dangerMap) {
         if (tiles == null || tiles.length == 0) {
             return;
         }
@@ -79,7 +79,13 @@ public class Map {
                     // The previous check was:
                     // if (x + currentTileSize > 0 && x < panelWidth && y + currentTileSize > 0 && y < panelHeight) {
                     java.awt.Image img = null;
+                    if(dangerMap != null && dangerMap.length > 1 && dangerMap[c][r]) {
+                        tileType = Utilities.Danger;
+                    }
                     switch (tileType) {
+                        case Utilities.Danger: //danger (testing)
+                            img = Utilities.DANGER_IMAGE;
+                            break;
                         case Utilities.WALL:
                             img = Utilities.WALL_IMAGE;
                             break;

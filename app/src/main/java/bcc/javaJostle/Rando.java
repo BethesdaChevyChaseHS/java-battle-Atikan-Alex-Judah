@@ -6,7 +6,7 @@ public class Rando extends Robot{
     private int curXMovement = 0;
     private int curYMovement = 0;
     public Rando(int x, int y){
-        super(x, y, 3, 2, 2, 3,"Rando", "randomBot.png", "defaultProjectile.png");
+        super(x, y, 3, 1, 2, 4,"Rando", "randomBot.png", "defaultProjectile.png");
         // Health: 3, Speed: 2, Attack Speed: 2, Projectile Strength: 3
         // Total = 10
     }

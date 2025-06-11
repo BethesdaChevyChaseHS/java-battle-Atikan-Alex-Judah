@@ -199,7 +199,7 @@ class Game extends JPanel {
         super.paintComponent(g); // Clears the panel
         if (map != null) {
             // Pass the integer zoomFactor directly
-            map.display(g, currentWidth, currentHeight, currentCameraX, currentCameraY, currentZoomFactor);
+            map.display(g, currentWidth, currentHeight, currentCameraX, currentCameraY, currentZoomFactor, robots.get(0).getDangerMap());
         }
 
         // Draw robots

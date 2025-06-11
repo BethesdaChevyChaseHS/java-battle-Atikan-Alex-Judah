@@ -118,6 +118,10 @@ public abstract class Robot {
         shoot = true;
     }
 
+    public boolean[][] getDangerMap() {
+        return new boolean[1][1];
+    }
+
     public abstract void think(ArrayList<Robot> robots, ArrayList<Projectile> projectiles, Map map,
             ArrayList<PowerUp> powerups);
 
