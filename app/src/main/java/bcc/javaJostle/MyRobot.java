@@ -19,6 +19,7 @@ public class MyRobot extends Robot{
     private int[][] distances;
     public boolean[][] dangerMap;
     private boolean flip;
+    private int stuckCounter = 0;
 
     public MyRobot(int x, int y){
         super(x, y, 2, 3, 2, 3,"bob", "myRobotImage.png", "defaultProjectileImage.png");
@@ -65,40 +66,35 @@ public class MyRobot extends Robot{
         if(canAttack()){
             for(Robot robot : robots) {
                 if (robot != this && robot.isAlive() ){
-                    predictiveAimAndShoot(robot);
-                    break;
+                    if(predictiveAimAndShoot(robot)) {
+                        break;
+                    }
                 }
             }
         }
         int currentX = getX();
         int currentY = getY();
         if (currentX == lastBotX && currentY == lastBotY) {
-            System.out.println("Unstick");
-            tiles = map.getTiles();
-            if(((tiles[(currentY + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE][(currentX + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE + 1] == Utilities.WALL) || (tiles[currentY/Utilities.TILE_SIZE][(currentX + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE + 1] == Utilities.WALL)) && (!(tiles[currentY/Utilities.TILE_SIZE][currentX/Utilities.TILE_SIZE - 1] == Utilities.WALL)  && !(tiles[(currentY + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE][(currentX + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE - 1] == Utilities.WALL))) {
-                System.out.println("Unstuck Left");
-                xMovement = -1;
-                yMovement = 0;
-                return;
-            }else if(((tiles[(currentY + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE][(currentX + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE - 1] == Utilities.WALL) || (tiles[currentY/Utilities.TILE_SIZE][(currentX + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE - 1] == Utilities.WALL)) && (!(tiles[currentY/Utilities.TILE_SIZE][currentX/Utilities.TILE_SIZE + 1] == Utilities.WALL)  && !(tiles[(currentY + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE][(currentX + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE + 1] == Utilities.WALL))) {
-                System.out.println("Unstuck Right");
-                xMovement = 1;
-                yMovement = 0;
-                return;
-            }else if(((tiles[(currentY + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE + 1][(currentX + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE] == Utilities.WALL) || (tiles[(currentY + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE + 1][currentX/Utilities.TILE_SIZE] == Utilities.WALL)) && (!(tiles[currentY/Utilities.TILE_SIZE - 1][currentX/Utilities.TILE_SIZE] == Utilities.WALL) && !(tiles[currentY/Utilities.TILE_SIZE - 1][(currentX + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE] == Utilities.WALL))) {
-                System.out.println("Unstuck Up");
-                xMovement = 0;
-                yMovement = -1;
-                return;
-            }else if(((tiles[(currentY + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE - 1][(currentX + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE] == Utilities.WALL) || (tiles[(currentY + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE - 1][currentX/Utilities.TILE_SIZE] == Utilities.WALL)) && (!(tiles[currentY/Utilities.TILE_SIZE + 1][currentX/Utilities.TILE_SIZE] == Utilities.WALL) && !(tiles[currentY/Utilities.TILE_SIZE + 1][(currentX + Utilities.ROBOT_SIZE)/Utilities.TILE_SIZE] == Utilities.WALL))) {
-                System.out.println("Unstuck Down");
-                xMovement = 0;
-                yMovement = 1;
-                return;
-            }
+            stuckCounter++;
+        } else {
+            stuckCounter = 0;
         }
         lastBotX = currentX;
         lastBotY = currentY;
+        if (stuckCounter >= 2) {
+            int[][] tiles = map.getTiles();
+            int width = tiles[0].length;
+            int height = tiles.length;
+            for (int tries = 0; tries < 10; tries++) {
+                int rx = (int)(Math.random() * width);
+                int ry = (int)(Math.random() * height);
+                if (tiles[ry][rx] != Utilities.WALL) {
+                    dijkstras(map, projectiles, rx * Utilities.TILE_SIZE, ry * Utilities.TILE_SIZE, otherRobots);
+                    break;
+                }
+            }
+            stuckCounter = 0;
+        }
     }
 
     private void farDijkstras(ArrayList<Robot> robots, ArrayList<Projectile> projectiles, Map map) {
@@ -177,13 +173,14 @@ public class MyRobot extends Robot{
                 }
             }
         }
-        /*if((lastX == -1 || lastY == -1) && (((farthestX == (getX() + Utilities.ROBOT_SIZE - 5)/Utilities.TILE_SIZE && farthestY == (getY()+Utilities.ROBOT_SIZE - 5)/Utilities.TILE_SIZE) && !flip) || ((farthestX == (getX()+Utilities.ROBOT_SIZE - 5)/Utilities.TILE_SIZE + (farthestY < 9 ? 2 : -2) && farthestY == (getY()+Utilities.ROBOT_SIZE-5)/Utilities.TILE_SIZE + (farthestX < 12 ? 2 : -2)) && flip)) && (((farthestX == (getX() + 5)/Utilities.TILE_SIZE && farthestY == (getY() + 5)/Utilities.TILE_SIZE) && !flip) || ((farthestX == (getX() + 5)/Utilities.TILE_SIZE + (farthestY < 9 ? 2 : -2) && farthestY == (getY() + 5)/Utilities.TILE_SIZE + (farthestX < 12 ? 2 : -2)) && flip))) {
-            flip = !flip;
-        }*/
+        
         dijkstras(map, projectiles, (farthestX + (flip ? (farthestX < 12 ? 2 : -2) : 0)) * Utilities.TILE_SIZE, (farthestY + (flip ? (farthestY < 9 ? 2 : -2) : 0)) * Utilities.TILE_SIZE, otherRobots);
     } 
 
-    private void predictiveAimAndShoot(Robot target) {
+    private boolean predictiveAimAndShoot(Robot target) {
+        if(!hasLineOfSight(target)) {
+            return false;
+        }
         double shooterX = getX();
         double shooterY = getY();
         double targetX = target.getX();
@@ -213,6 +210,7 @@ public class MyRobot extends Robot{
         double aimX = targetX + targetVelX * interceptTime;
         double aimY = targetY + targetVelY * interceptTime;
         shootAtLocation((int) aimX, (int) aimY);
+        return true;
     }
 
     public void dijkstras(Map map, ArrayList<Projectile> projectiles, double targetX, double targetY, ArrayList<Robot> otherRobots) {
@@ -297,7 +295,6 @@ public class MyRobot extends Robot{
         }
 
         if(dangerMap[(int) targetX/Utilities.TILE_SIZE][(int) targetY/Utilities.TILE_SIZE]) {
-            System.out.println("New Target Found");
             double[] newTarget = newTarget(targetX, targetY);
             targetX = newTarget[0];
             targetY = newTarget[1];
@@ -356,7 +353,6 @@ public class MyRobot extends Robot{
             }
             currDist = distances[x][y];
             if(currDist == Integer.MAX_VALUE) {
-                System.out.println("No path found to target" + targetX/Utilities.TILE_SIZE + ", " + targetY/Utilities.TILE_SIZE + ", " + getX()/Utilities.TILE_SIZE + ", " + getY()/Utilities.TILE_SIZE);
                 runAway(projectiles);
                 return;
             }
@@ -508,5 +504,42 @@ public class MyRobot extends Robot{
                 yMovement = 0;
                 break;
         }
+    }
+
+    private boolean hasLineOfSight(Robot target) {
+        int startX = getX() + Utilities.ROBOT_SIZE / 2;
+        int startY = getY() + Utilities.ROBOT_SIZE / 2;
+        int targetLeft = target.getX();
+        int targetRight = target.getX() + Utilities.ROBOT_SIZE - 1;
+        int targetTop = target.getY();
+        int targetBottom = target.getY() + Utilities.ROBOT_SIZE - 1;
+
+        int[][] tiles = this.tiles;
+        for (int tx = targetLeft; tx <= targetRight; tx += Math.max(1, Utilities.ROBOT_SIZE / 2)) {
+            for (int ty = targetTop; ty <= targetBottom; ty += Math.max(1, Utilities.ROBOT_SIZE / 2)) {
+                if (lineClear(startX, startY, tx, ty, tiles)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean lineClear(int x0, int y0, int x1, int y1, int[][] tiles) {
+        int dx = Math.abs(x1 - x0);
+        int dy = Math.abs(y1 - y0);
+        int sx = x0 < x1 ? 1 : -1;
+        int sy = y0 < y1 ? 1 : -1;
+        int err = dx - dy;
+        while (true) {
+            int tileX = x0 / Utilities.TILE_SIZE;
+            int tileY = y0 / Utilities.TILE_SIZE;
+            if (tiles[tileY][tileX] == Utilities.WALL) return false;
+            if (x0 == x1 && y0 == y1) break;
+            int e2 = 2 * err;
+            if (e2 > -dy) { err -= dy; x0 += sx; }
+            if (e2 < dx) { err += dx; y0 += sy; }
+        }
+        return true;
     }
 }
